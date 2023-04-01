@@ -1,8 +1,7 @@
+from piece import *
+from keys import Keys
 from tkinter import Canvas
 from random import choice
-from block import *
-from pieces import *
-from keys import Keys
 
 
 class Board:
@@ -30,10 +29,10 @@ class Board:
                 empty_list.append(EMPTY)
             Board.board_state.append(empty_list)
 
-        Block.display = self.screen
-        Block.num_of_columns = num_of_columns
-        Block.num_of_rows = num_of_rows
-        Block.board = Board.board_state
+        Piece.display = self.screen
+        Piece.num_of_columns = num_of_columns
+        Piece.num_of_rows = num_of_rows
+        Piece.board = Board.board_state
 
         Board.generate_new_piece()
         self.master.after(fps, self.update)
@@ -48,15 +47,11 @@ class Board:
         # Board.current_piece = ZigZag.init()
         # Board.current_piece = T.init()
 
-        # block = Block(0, Block.num_of_columns // 2)
+        # block = Piece(0, Piece.num_of_columns // 2)
         # Board.current_piece = Blocks((block,))
         Board.add_piece_to_board(Board.current_piece)
 
     def update(self):
-        for block in Board.board_state[0]:
-            if block != EMPTY and block.is_stationary:
-                raise Exception('YOU LOST!')
-
         # if the piece has reached the last row, or if it has collided with another piece
         # there is no point in updating the piece, so we generate a new one.
         if Board.current_piece.is_stationary:
@@ -69,7 +64,6 @@ class Board:
 
         # clear a line if there are no empty spaces
         num_of_cleared_lines = 0
-        cleared_index = 0
         for index, row in enumerate(Board.board_state):
             if EMPTY not in row:
                 if not all([block.is_stationary for block in row]):
@@ -77,22 +71,21 @@ class Board:
                 [block.go_poof() for block in row]
                 Board.board_state[index] = [EMPTY for _ in range(len(row))]
                 num_of_cleared_lines += 1
-                cleared_index = index
 
         # move all the blocks down if lines were cleared
         if num_of_cleared_lines:
-            for row in Board.board_state[cleared_index::-1]:
+            for row in Board.board_state[::-1]:
                 for block in row:
                     if block == EMPTY or not block.is_stationary:
                         continue
                     block.is_stationary = False
                     Board.remove_piece_from_board(Blocks((block,)))
-                    block.move_n_times(Keys.DOWN, n=Block.num_of_rows)
+                    [block.move(Keys.DOWN) for _ in range(Piece.num_of_rows)]
                     Board.add_piece_to_board(Blocks((block,)))
                     block.is_stationary = True
 
-        # update the board for class Block as well
-        Block.board = Board.board_state
+        # update the board for class Piece as well
+        Piece.board = Board.board_state
 
         self.master.after(1000, self.update)
 
@@ -121,8 +114,5 @@ class Board:
 
         elif event.keycode == 40:
             Board.current_piece.move(Keys.DOWN)
-
-        elif event.keycode == 32:
-            Board.current_piece.move(Keys.SPACE_BAR)
 
         Board.add_piece_to_board(Board.current_piece)
